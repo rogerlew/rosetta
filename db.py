@@ -23,84 +23,37 @@
 '''
 
 
-
 import os
 import sys
-#note that sqlite3 and mysqldb get imported in DB_init CONDITIONALLY
+import sqlite3
+
+from os.path import join as _join
+from os.path import exists
+
+_this_dir = os.path.dirname(__file__)
+_sqlite_path = _join(_this_dir, "sqlite/Rosetta.sqlite")
 
 class DB(object):
 
     @property
-    def conn(self): return(self._conn)
-    @conn.setter
-    def conn(self,value): self._conn=value
+    def conn(self): 
+        return(self._conn)
 
-    def __init__(self,host, user, db_name, sqlite_path=None, debug=False):
+    def __init__(self, debug=False):
+        self.debug = debug
 
-        self.debug=debug
-
-        if sqlite_path=='':  # there is probably a more elegant way, but --sqlite was defined with a default of ''
-            path=None
-        else:
-            path=sqlite_path
-
-        if path is not None:
-
-            if not os.path.exists(path):
-                print(("Cannot find the sqlite path %s" % (path)))
-                sys.exit(1)
-
-            try:
-                import sqlite3
-            except ImportError:
-                print("Python sqlite3 module not installed?")
-                sys.exit (1)
-                
+        if not exists(_sqlite_path):
+            raise Exception("Cannot find the sqlite path '%s'" % _sqlite_path)
             self.Error = sqlite3.Error
 
-            try:
-                self.conn = sqlite3.connect(sqlite_path)
-            except self.Error as e:
-                print("Database connection error %d: %s" % (e.args[0], e.args[1]))
-                sys.exit (1)
+        try:
+            self._conn = sqlite3.connect(sqlite_path)
+        except self.Error as e:
+            raise Exception("Database connection error %d: %s" % (e.args[0], e.args[1]))
 
-            #self.conn.text_factory = str # needed to get the binary data from sqlite
-            self.conn.text_factory = bytes
-            #self.conn.text_factory = lambda x: str(x, 'iso-8859-1')
-            self.sqlite=True
-        else:
+        self.conn.text_factory = bytes
+        self.sqlite = True
 
-            try:
-                import MySQLdb
-            except ImportError:
-                print("Python MySQLdb module not installed?")
-                sys.exit (1)
-
-            try:
-                import getpass
-            except ImportError:
-                print("Python getpass module not installed?")
-                sys.exit (1)
-
-            self.Error = MySQLdb.Error
-
-            print("Password for Rosetta database on MySQL server:")
-            passwd = getpass.getpass()
-            try:
-                self.conn=MySQLdb.connect(host = host,
-                                          user = user,
-                                          passwd = passwd,
-                                          db = db_name)
-                #self.conn.text_factory = str 
-                
-
-            except self.Error as e:
-                print("Database connection error %d: %s" % (e.args[0], e.args[1]))
-                sys.exit (1)
-
-            self.conn.text_factory = bytes
-            self.sqlite=False
-            
     def __enter__(self):
         return self
 
@@ -112,14 +65,15 @@ class DB(object):
 
     def get_cursor(self):
         try:
-            cursor = self.conn.cursor ()
+            return  self.conn.cursor()
         except self.Error as e:
-            print("Database cursor error %d: %s" % (e.args[0], e.args[1]))
-            sys.exit (1)
-        return(cursor)
+            raise Exception("Database cursor error %d: %s" % (e.args[0], e.args[1]))
 
     def commit(self): 
-        if self.conn: self.conn.commit()
+        if self.conn:
+           self.conn.commit()
 
     def close(self):  
-        if self.conn: self.conn.close()
+        if self.conn: 
+            self.conn.close()
+
