@@ -212,13 +212,13 @@ class ANN(object):
 
     def tostring(self):
         s = self.hash_id
-        s += np.array([self.model], dtype=N.int32).tostring()  # could be byte
+        s += np.array([self.model], dtype=np.int32).tostring()  # could be byte
         s += self.cnf.tostring()
         for i in range(self.nlayer):
-            s += np.array(N.shape(self.w[i]),
-                          dtype=N.int32).tostring()  # rows, cols
+            s += np.array(np.shape(self.w[i]),
+                          dtype=np.int32).tostring()  # rows, cols
             s += self.w[i].tostring(order='C')  # the array itself
-            s += np.array(N.shape(self.b[i]), dtype=N.int32).tostring()
+            s += np.array(np.shape(self.b[i]), dtype=np.int32).tostring()
             s += self.b[i].tostring(order='C')
         return(s)
 
@@ -243,8 +243,8 @@ class ANN(object):
             return(' replica_hash, ann_hash, seq, model_id, nin, nlayer, nhid1, nhid2, nout, ann_bin ')
 
     def predict(self, x):
-        tmp = N.copy(x)
-        dot = N.dot
+        tmp = np.copy(x)
+        dot = np.dot
         #print("inp ",tmp)
         for i in range(self.nlayer):
             # print("dot",i)
@@ -272,7 +272,7 @@ class ANN(object):
         return 1.0 / (1.0 + np.exp(-1.0 * x))
 
     def purelin(self, x):
-        return N.copy(x)
+        return np.copy(x)
 
     def __str__(self):
         return "%s(%r)" % (self.__class__, self.__dict__)
@@ -286,7 +286,7 @@ class ANN(object):
         f = open(name, 'r')
         assert f, 'file not found'
         while f.tell() < os.fstat(f.fileno()).st_size:
-            yield ANN.from_stream(f, import_bin=True)
+            yield ANnp.from_stream(f, import_bin=True)
         f.close()
 
     # property?
@@ -308,7 +308,7 @@ class REPLICA(object):
 
     @property
     def ncnv(self):
-        nv = N.count_nonzero(N.array(self.pat == 0, dtype=N.int))
+        nv = np.count_nonzero(np.array(self.pat == 0, dtype=np.int))
         nc = len(self.pat)
         return(nc, nv)
 
@@ -323,7 +323,7 @@ class REPLICA(object):
 
     def split_boot(self, line, oldrosetta=False):
         if oldrosetta:
-            pat = N.array([int(i) for i in line.split()], dtype=N.int8)
+            pat = np.array([int(i) for i in line.split()], dtype=np.int8)
             # OK we made an error in the MATLAB code.  I intended to use SHA-1 there, but it defaulted to MD5
             # SHA-1 returns 32 hex char, and sha-1 returns 40
             # since we are 'stuck' with 32 (new rosetta) for the replicas, we should also use md5 for old rosetta
@@ -335,7 +335,7 @@ class REPLICA(object):
             tmp = line.split()
             hash_id = tmp[0]
             assert len(hash_id) == 32, 'hash_id not of len 32'
-            pat = N.array([int(i) for i in tmp[1:]], dtype=N.int8)
+            pat = np.array([int(i) for i in tmp[1:]], dtype=np.int8)
         return(hash_id, pat)
 
     @staticmethod
@@ -349,7 +349,7 @@ class REPLICA(object):
         rep = REPLICA()
         assert len(hash_id) == 32, 'hash_id not len(32)'
         rep.hash_id = hash_id
-        rep.pat = N.fromstring(s, dtype=N.int8, count=len(s), sep='')
+        rep.pat = np.fromstring(s, dtype=np.int8, count=len(s), sep='')
         return(rep)
 
     def tostring(self): return(self.pat.tostring())
@@ -464,16 +464,16 @@ class PS(object):
 
     def compute_scales(self, data, var_names, var_pos, ymin=-1.0, ymax=1.0):
 
-        self.xmin = N.nanmin(data, axis=1)
-        self.xmax = N.nanmax(data, axis=1)
+        self.xmin = np.nanmin(data, axis=1)
+        self.xmax = np.nanmax(data, axis=1)
         self.nvar = len(self.xmin)
         self.xmin = self.xmin.reshape((self.nvar, 1))
         self.xmax = self.xmax.reshape((self.nvar, 1))
         # print(self.xmin.shape)
         # print(self.xmax.shape)
 
-        self.ymin = N.ones((self.nvar, 1), dtype=float)*ymin
-        self.ymax = N.ones((self.nvar, 1), dtype=float)*ymax
+        self.ymin = np.ones((self.nvar, 1), dtype=float)*ymin
+        self.ymax = np.ones((self.nvar, 1), dtype=float)*ymax
         # print(self.ymin.shape)
         # print(self.ymax.shape)
 
@@ -513,22 +513,22 @@ class PS(object):
         # print(data)
         self.nvar = len(data)
 
-        xmin = N.zeros((self.nvar,), dtype=N.float)
-        xmax = N.zeros((self.nvar,), dtype=N.float)
-        ymin = N.zeros((self.nvar,), dtype=N.float)
-        ymax = N.zeros((self.nvar,), dtype=N.float)
-        gain = N.zeros((self.nvar,), dtype=N.float)
-        offset = N.zeros((self.nvar,), dtype=N.float)
+        xmin = np.zeros((self.nvar,), dtype=np.float)
+        xmax = np.zeros((self.nvar,), dtype=np.float)
+        ymin = np.zeros((self.nvar,), dtype=np.float)
+        ymax = np.zeros((self.nvar,), dtype=np.float)
+        gain = np.zeros((self.nvar,), dtype=np.float)
+        offset = np.zeros((self.nvar,), dtype=np.float)
 
         # offset traditional unscaling of Rostta output
-        sco = N.zeros((self.nvar,), dtype=N.float)
+        sco = np.zeros((self.nvar,), dtype=np.float)
         # slope traditional unscaling of Rostta output
-        scs = N.zeros((self.nvar,), dtype=N.float)
+        scs = np.zeros((self.nvar,), dtype=np.float)
         # 0: no transform, 1: log10 transform
-        sct = N.zeros((self.nvar,), dtype=N.int)
+        sct = np.zeros((self.nvar,), dtype=np.int)
 
-        d_min = N.zeros((self.nvar,), dtype=N.float)
-        d_max = N.zeros((self.nvar,), dtype=N.float)
+        d_min = np.zeros((self.nvar,), dtype=np.float)
+        d_max = np.zeros((self.nvar,), dtype=np.float)
 
         # self._var_names=[] # moved to _init_
         for i, row in enumerate(data):
@@ -549,21 +549,21 @@ class PS(object):
             d_max[i] = row[12]
 
         # convert to pseudo 2D
-        self.xmin = xmin[:, N.newaxis]
-        self.xmax = xmax[:, N.newaxis]
-        self.ymin = ymin[:, N.newaxis]
-        self.ymax = ymax[:, N.newaxis]
-        self.gain = gain[:, N.newaxis]
-        self.offset = offset[:, N.newaxis]
+        self.xmin = xmin[:, np.newaxis]
+        self.xmax = xmax[:, np.newaxis]
+        self.ymin = ymin[:, np.newaxis]
+        self.ymax = ymax[:, np.newaxis]
+        self.gain = gain[:, np.newaxis]
+        self.offset = offset[:, np.newaxis]
 
         # some numpy trickery (convert from 1D to 3D):
-        self.sco = sco[N.newaxis, :, N.newaxis]
-        self.scs = scs[N.newaxis, :, N.newaxis]
-        self.sct = sct[N.newaxis, :, N.newaxis]
+        self.sco = sco[np.newaxis, :, np.newaxis]
+        self.scs = scs[np.newaxis, :, np.newaxis]
+        self.sct = sct[np.newaxis, :, np.newaxis]
 
         # pseudo 2D for data sanity checking (input needs to be in [min..max] (inclusive)
-        self.data_min = d_min[:, N.newaxis]
-        self.data_max = d_max[:, N.newaxis]
+        self.data_min = d_min[:, np.newaxis]
+        self.data_max = d_max[:, np.newaxis]
         return
 
     def fwd_mapminmax(self, x):
@@ -580,27 +580,27 @@ class PS(object):
 
     def check_data(self, data_in):
         # yield 2D array of bools
-        nvar, nsamp = N.shape(data_in)
+        nvar, nsamp = np.shape(data_in)
         # print("MINIMUM")
         # print(self.data_min)
         # print("MAXIMUM")
         # print(self.data_max)
-        res = N.logical_and(N.greater_equal(data_in, self.data_min), N.less_equal(
+        res = np.logical_and(np.greater_equal(data_in, self.data_min), np.less_equal(
             data_in, self.data_max))  # must be between these values
         # convert 1D array (sample basis)
-        res_sample = N.all(res, axis=0)
+        res_sample = np.all(res, axis=0)
         # check that sand+silt+clay exist in var_names
         ssc_set = set(['sand', 'silt', 'clay'])
         vnset = set(self.var_names)
         # print(self.var_names)
         if ssc_set.issubset(vnset):
             # sand, silt,clay are input and must sum to [99..101]
-            ssc_sum = N.zeros((nsamp,), dtype=N.float)
+            ssc_sum = np.zeros((nsamp,), dtype=np.float)
             for s in ssc_set:
                 ssc_sum += data_in[self.var_names.index(s)]
-            res_ssc = N.logical_and(N.greater_equal(ssc_sum, 99.0), N.less_equal(
+            res_ssc = np.logical_and(np.greater_equal(ssc_sum, 99.0), np.less_equal(
                 ssc_sum, 101.0))  # must be between these values
-            res_sample = N.logical_and(res_sample, res_ssc)
+            res_sample = np.logical_and(res_sample, res_ssc)
         # so return a 1D array whether the input is valid (true) or not
         return(res_sample)
 
@@ -656,7 +656,7 @@ class ANN_MODEL(object):
             # print(tmp_list[0:4])
 
         # whoops, next line needs to be out of loop...
-        self.ann_sequence = [ANN.from_stream(io.BytesIO(ann_bin), nlayer=nlayer, transfers=[nhid1_transfer, nhid2_transfer, nout_transfer]) for (
+        self.ann_sequence = [ANnp.from_stream(io.BytesIO(ann_bin), nlayer=nlayer, transfers=[nhid1_transfer, nhid2_transfer, nout_transfer]) for (
             hash_id, seq, model_id, nin, nlayer, nhid1, nhid1_transfer, nhid2, nhid2_transfer, nout, nout_transfer, ann_bin) in tmp_list]
 
         assert len(self.ann_sequence) > 0, "Error cannot get the ANNs from the DB"
@@ -685,16 +685,16 @@ class ANN_MODEL(object):
     def predict(self, data):
 
         # print('data_in_un',data[:,:10])
-        nvar, nsamp = N.shape(data)
+        nvar, nsamp = np.shape(data)
         data_bool = self.PS_data_in.check_data(data)
-        nsamp_valid = N.sum(data_bool)
+        nsamp_valid = np.sum(data_bool)
         # selects only valid samples
-        data_valid = N.compress(data_bool, data, axis=1)
-        data_ind = N.nonzero(data_bool)
+        data_valid = np.compress(data_bool, data, axis=1)
+        data_ind = np.nonzero(data_bool)
         # above could be decorator
 
         data_in_mm = self.PS_data_in.fwd_mapminmax(data_valid)
-        res_tmp = N.zeros((self.nmodel, self.nout, nsamp_valid), dtype=N.float)
+        res_tmp = np.zeros((self.nmodel, self.nout, nsamp_valid), dtype=np.float)
 
         for i, ann in enumerate(self.ann_sequence):
             try:
@@ -709,8 +709,8 @@ class ANN_MODEL(object):
         if nsamp == nsamp_valid:
             res_fin = res_tmp
         elif nsamp > nsamp_valid:
-            res_fin = N.ones((self.nmodel, self.nout, nsamp),
-                             dtype=N.float)*-9.9
+            res_fin = np.ones((self.nmodel, self.nout, nsamp),
+                             dtype=np.float)*-9.9
             res_fin[:, :, data_ind[0]] = res_tmp
         else:
             print("ERROR nsamp_valid > nsamp (should be impossible")
@@ -777,20 +777,20 @@ class PTF_MODEL(object):
         def skewkurt(res, mean, std):
 
             adev = (res-mean)/std
-            s = N.power(adev, 3).mean(axis=0)
-            k = N.power(adev, 4).mean(axis=0)-3.0
+            s = np.power(adev, 3).mean(axis=0)
+            k = np.power(adev, 4).mean(axis=0)-3.0
             return(s, k)
 
-        avg = N.mean(res, axis=0)
-        std = N.zeros((nvar, nsamp), dtype=N.float)
-        skew = N.zeros((nvar, nsamp), dtype=N.float)
-        kurt = N.zeros((nvar, nsamp), dtype=N.float)
-        # print(N.shape(res))
-        cov = N.zeros((nvar, nvar, nsamp), dtype=N.float)
+        avg = np.mean(res, axis=0)
+        std = np.zeros((nvar, nsamp), dtype=np.float)
+        skew = np.zeros((nvar, nsamp), dtype=np.float)
+        kurt = np.zeros((nvar, nsamp), dtype=np.float)
+        # print(np.shape(res))
+        cov = np.zeros((nvar, nvar, nsamp), dtype=np.float)
         for i in range(nsamp):
-            # print(N.shape(res[:,:,i]))
-            cov[:, :, i] = N.cov(res[:, :, i], rowvar=0, ddof=0)
-            std[:, i] = N.sqrt(N.diag(cov[:, :, i]))
+            # print(np.shape(res[:,:,i]))
+            cov[:, :, i] = np.cov(res[:, :, i], rowvar=0, ddof=0)
+            std[:, i] = np.sqrt(np.diag(cov[:, :, i]))
             s, k = skewkurt(res[:, :, i], avg[:, i], std[:, i])
 
             skew[:, i] = s
@@ -801,7 +801,7 @@ class PTF_MODEL(object):
     def predict(self, data_in, sum_data=True):
 
         # make sure data is a numpy thing
-        data = N.array(data_in, dtype=N.float)
+        data = np.array(data_in, dtype=np.float)
 
         # clumsy code....
         varout = []
@@ -809,7 +809,7 @@ class PTF_MODEL(object):
         data_bool = []
         nout_total = 0
         # need to be intelligent how data offered, transpose if needed? How to deal with square matrices?
-        nin, nsamp = N.shape(data)
+        nin, nsamp = np.shape(data)
         # SELECT CODE HERE
 
         for i in range(self.nmodel):  # nmodel refers to the possibility of HYBRID models
@@ -817,7 +817,7 @@ class PTF_MODEL(object):
             #print("model_no %s, model_id %s" %(self.model_no,self.ann_models[i].model_id))
             # res (3D), varnames (1D), bool of valid data (1D?)
             r, v, b = self.ann_models[i].predict(data)
-            # print(N.shape(r))
+            # print(np.shape(r))
             res.append(r)
             varout.append(v)
             data_bool.append(b)
@@ -829,13 +829,13 @@ class PTF_MODEL(object):
             # results are almost normal
             var_names = []
 
-            sum_res_mean = N.zeros((nout_total, nsamp), dtype=N.float)
-            sum_res_std = N.zeros((nout_total, nsamp), dtype=N.float)
-            sum_res_skew = N.zeros((nout_total, nsamp), dtype=N.float)
-            sum_res_kurt = N.zeros((nout_total, nsamp), dtype=N.float)
-            sum_res_cov = N.zeros(
-                (nout_total, nout_total, nsamp), dtype=N.float)
-            sum_res_bool = N.zeros((nout_total, nsamp), dtype=bool)
+            sum_res_mean = np.zeros((nout_total, nsamp), dtype=np.float)
+            sum_res_std = np.zeros((nout_total, nsamp), dtype=np.float)
+            sum_res_skew = np.zeros((nout_total, nsamp), dtype=np.float)
+            sum_res_kurt = np.zeros((nout_total, nsamp), dtype=np.float)
+            sum_res_cov = np.zeros(
+                (nout_total, nout_total, nsamp), dtype=np.float)
+            sum_res_bool = np.zeros((nout_total, nsamp), dtype=bool)
             offset = 0
             for i in range(self.nmodel):  # nmodel refers to the possibility of HYBRID models
                 var_names += varout[i]  # could indicate log units
