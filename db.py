@@ -33,10 +33,11 @@ from os.path import exists
 _this_dir = os.path.dirname(__file__)
 _sqlite_path = _join(_this_dir, "sqlite/Rosetta.sqlite")
 
+
 class DB(object):
 
     @property
-    def conn(self): 
+    def conn(self):
         return(self._conn)
 
     def __init__(self, debug=False):
@@ -49,7 +50,8 @@ class DB(object):
         try:
             self._conn = sqlite3.connect(sqlite_path)
         except self.Error as e:
-            raise Exception("Database connection error %d: %s" % (e.args[0], e.args[1]))
+            raise Exception("Database connection error %d: %s" %
+                            (e.args[0], e.args[1]))
 
         self.conn.text_factory = bytes
         self.sqlite = True
@@ -65,15 +67,15 @@ class DB(object):
 
     def get_cursor(self):
         try:
-            return  self.conn.cursor()
+            return self.conn.cursor()
         except self.Error as e:
-            raise Exception("Database cursor error %d: %s" % (e.args[0], e.args[1]))
+            raise Exception("Database cursor error %d: %s" %
+                            (e.args[0], e.args[1]))
 
-    def commit(self): 
+    def commit(self):
         if self.conn:
-           self.conn.commit()
+            self.conn.commit()
 
-    def close(self):  
-        if self.conn: 
+    def close(self):
+        if self.conn:
             self.conn.close()
-
