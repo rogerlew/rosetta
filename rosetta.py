@@ -27,6 +27,7 @@ import numpy as np
 from time import time
 from contextlib import closing
 from pprint import pprint
+import math
 
 from .ann import PTF_Model
 from .db import DB
@@ -72,7 +73,7 @@ class Rosetta(object):
 
         :return:
         res_dict
-            shape: (nboot,nout,nsamp)
+            shape: (nboot, nout, nsamp)
             Warning: old rosetta (models 102..105) can ONLY provide retention parameters (not Ks)
             New models (2..5) provide retention+ks
             This is because the retention and ks models are synchronized in the new models whereas they were calibrated
@@ -88,7 +89,7 @@ class Rosetta(object):
             print("Processing")
             t0 = time()
 
-        res_dict = ptf_model.predict(data, summary_data=summary_data)
+        res_dict = ptf_model.predict(data.transpose(), summary_data=summary_data)
 
         if debug:
             print("Processing done (%s s)" % (time() - t0))
@@ -96,7 +97,27 @@ class Rosetta(object):
 
         return res_dict
 
-    def predict(self, data: np.array):
+    @staticmethod
+    def _calculate_field_capacity(theta_r, theta_s, alpha, npar, ks):
+        """
+        Twarakavi et al., (2009). An objective analysis of the dynamic nature of field capacity. Water Resources Research.
+        """
+        exponent = -0.60 * (2 + np.log10(ks))
+        thetastarfc = npar ** exponent
+        field_capacity = thetastarfc * (theta_s - theta_r) + theta_r
+        return field_capacity
+
+    @staticmethod
+    def calculate_wilting_point(theta_r, theta_s, alpha, npar, ks):
+        """
+        Twarakavi et al., (2009). An objective analysis of the dynamic nature of field capacity. Water Resources Research.
+        """
+        num = theta_s - theta_r
+        denom = (1 + (alpha * 15000.) ** npar) ** ((npar - 1) / npar)
+        wilting_point = theta_r + (num / denom)
+        return wilting_point
+
+    def predict(self, data: np.array, calc_wilting_point=False, calc_field_capacity=False):
         """
         :param data:
             np.array with (nsamp, ninput) dimensions
@@ -113,11 +134,19 @@ class Rosetta(object):
         res_dict = self.predict_raw(data, summary_data=True)
 
         vgm_mean = res_dict['sum_res_mean']
-        return dict(theta_r=vgm_mean[0],
-                    theta_s=vgm_mean[1],
-                    alpha=10**vgm_mean[2],
-                    npar=10**vgm_mean[3],
-                    ks=10**vgm_mean[4])
+        res = dict(theta_r=vgm_mean[0],
+                   theta_s=vgm_mean[1],
+                   alpha=10**vgm_mean[2],
+                   npar=10**vgm_mean[3],
+                   ks=10**vgm_mean[4])
+
+        if calc_wilting_point:
+             res['wp'] = self.calculate_wilting_point(
+                 res['theta_r'], res['theta_s'], res['alpha'], res['npar'], res['ks'])
+
+        if calc_field_capacity:
+             res['fc'] = self._calculate_field_capacity(
+                 res['theta_r'], res['theta_s'], res['alpha'], res['npar'], res['ks'])
 
     def _get_rosetta_cal_data(self, input_var):
         """
