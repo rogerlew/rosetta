@@ -31,7 +31,7 @@ from ann import PTF_Model
 from db import DB
 from pprint import pprint
 
-
+cd ~/D
 class Rosetta(object):
     def __init__(self, model_no, debug=True):
         """
