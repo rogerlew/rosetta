@@ -9,6 +9,8 @@ parser = argparse.ArgumentParser(
 parser.add_argument('model_n',  type=int)
 
 parser.add_argument('--raw', action='store_true', help='get raw data')
+parser.add_argument('--calc_wilting_point', action='store_true', help='calculate wilting point')
+parser.add_argument('--calc_field_capacity', action='store_true', help='calculate wilting point')
 
 parser.add_argument('-i', '--input', action='store', help='input from file ')
 parser.add_argument('-o', '--output', action='store',
@@ -27,19 +29,20 @@ if args.raw:
     print(res_dict)
 
 else:
-    res_dict = _rosetta.predict(data_in)
+    res_dict = _rosetta.predict(data_in,
+                                calc_wilting_point=args.calc_wilting_point,
+                                calc_field_capacity=args.calc_field_capacity)
     print(res_dict)
 
     if args.output:
         if 'tests/validation' in os.path.abspath(args.output):
             print('Error, cannot overwrite files in tests/validation')
-        vgm_new = np.stack((res_dict['theta_r'],
-                            res_dict['theta_s'],
-                            res_dict['alpha'],
-                            res_dict['npar'],
-                            res_dict['ks']))
-        vgm_new = vgm_new.transpose()
-        # output estimation
+
+        vgm_new = []
+        for k, v in res_dict.items():
+            vgm_new.append(v)
+
+        vgm_new = np.stack(vgm_new).transpose()
         np.savetxt(args.output, vgm_new, delimiter=',', fmt='%f')
 
 
