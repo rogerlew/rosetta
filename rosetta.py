@@ -34,7 +34,7 @@ from .db import DB
 
 
 class Rosetta(object):
-    def __init__(self, model_no, debug=True):
+    def __init__(self, model_no, debug=False):
         """
         :param model_no: Specifies model (note model 1 and 101 are still missing: textural tables of parameters)
             2 NEW SSC (sand, silt, clay)
