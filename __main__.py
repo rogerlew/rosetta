@@ -17,7 +17,7 @@ parser.add_argument('-o', '--output', action='store',
 args = parser.parse_args()
 print(args.input)
 
-data_in = np.genfromtxt(args.input, delimiter='', dtype=float).transpose()
+data_in = np.genfromtxt(args.input, delimiter='', dtype=float)
 print(data_in)
 
 _rosetta = rosetta.Rosetta(args.model_n)
