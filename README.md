@@ -2,11 +2,11 @@
 
 Pedotransfer functions by Schaap et al., 2001 and Zhang and Schaap, 2016.
 
-ROSETTA model predicts van Genuchten soil water retention curve parameters 
-Weighted recalibration of the Rosetta pedotransfer model with improved estimates of hydraulic parameter 
+Rosetta predicts van Genuchten soil water retention curve parameters utilizing a
+weighted recalibration of the Rosetta pedotransfer model with improved estimates of hydraulic parameter 
 distributions and summary statistics (Rosetta3). Journal of Hydrology.
 
-This version of Rosetta has been refactored by Roger Lew (2021) for use as a Python3 module
+This version of Rosetta has been refactored by Roger Lew (2021) for use as a Python3 package under GNU GPL V2.
 
 For more information regrading Rosetta see https://cals.arizona.edu/research/rosetta/
 
