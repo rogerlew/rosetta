@@ -50,9 +50,9 @@ e.g. homebrew Python install on MacOS
 ## CLI interface by calling rosetta as a module
 ```
 %  python3 -m rosetta -h
-usage: __main__.py [-h] [--raw] [-i INPUT] [-o OUTPUT] model_n
+usage: __main__.py [-h] [--raw] [--calc_wilting_point] [--calc_field_capacity] [-i INPUT] [-o OUTPUT] model_n
 
-Rosetta 3 pedotransfer function interface.
+Rosetta 3 pedotransfer function CLI.
 
 positional arguments:
   model_n
@@ -60,9 +60,13 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --raw                 get raw data
+  --calc_wilting_point  calculate wilting point
+  --calc_field_capacity
+                        calculate field capacity
   -i INPUT, --input INPUT
                         input from file
   -o OUTPUT, --output OUTPUT
                         store predicted data
+
 % python3 -m rosetta 3 -i test_input_H3w.txt -o test_output_H3w.txt
 ```

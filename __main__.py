@@ -43,7 +43,7 @@ else:
             vgm_new.append(v)
 
         vgm_new = np.stack(vgm_new).transpose()
-        np.savetxt(args.output, vgm_new, delimiter=',', fmt='%f')
+        np.savetxt(args.output, vgm_new, delimiter=',', fmt='%f', header=','.join(res_dict.keys()))
 
 
 # python3 rosetta.py 2 -i tests/input/test_input_H2w.txt -o tests/output/test_output_H2w.txt
