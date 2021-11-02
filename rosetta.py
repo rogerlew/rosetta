@@ -148,6 +148,8 @@ class Rosetta(object):
              res['fc'] = self._calculate_field_capacity(
                  res['theta_r'], res['theta_s'], res['alpha'], res['npar'], res['ks'])
 
+        return res
+
     def _get_rosetta_cal_data(self, input_var):
         """
         This is given as an example
