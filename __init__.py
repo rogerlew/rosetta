@@ -4,6 +4,7 @@ from .rosetta import Rosetta
 if __name__ == "__main__":
     import os
     import argparse
+    import numpy as np
 
     parser = argparse.ArgumentParser(
         description='Rosetta 3 pedotransfer function interface example.')

@@ -27,8 +27,8 @@ import numpy as np
 from time import time
 from contextlib import closing
 
-from .ann import PTF_Model
-from .db import DB
+from ann import PTF_Model
+from db import DB
 from pprint import pprint
 
 
