@@ -28,8 +28,9 @@ from time import time
 from contextlib import closing
 from pprint import pprint
 
-import ann
-import db
+from .ann import PTF_Model
+from .db import DB
+
 
 class Rosetta(object):
     def __init__(self, model_no, debug=True):
@@ -51,11 +52,11 @@ class Rosetta(object):
         """
         self.debug = debug
 
-        with db.DB() as _db:
+        with DB() as db:
             if debug:
                 print("Getting models from database")
                 t0 = time()
-            self.ptf_model = ann.PTF_Model(model_no, _db)
+            self.ptf_model = PTF_Model(model_no, db)
 
             if debug:
                 print("Getting models from database, done (%s s)" % (time()-t0))
@@ -146,8 +147,8 @@ class Rosetta(object):
             print(sql_string)
             t0 = time()
 
-        with db.DB() as _db:
-            with closing(_db.get_cursor()) as cursor:
+        with DB() as db:
+            with closing(db.get_cursor()) as cursor:
                 cursor.execute(sql_string)
                 data = np.array(list(cursor))
                 data = data.transpose()
