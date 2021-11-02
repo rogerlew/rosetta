@@ -19,6 +19,7 @@ e.g. homebrew Python install on MacOS
 ```bash
 % cd /opt/homebrew/lib/python3.9/site-packages/rosetta/
 % git clone https://github.com/rogerlew/rosetta
+% cd ~
 ```
 
 ## Rosetta can be used from Python
@@ -47,7 +48,7 @@ e.g. homebrew Python install on MacOS
  'fc': array([0.34023513])}
 ```
 
-## CLI interface by calling rosetta as a module
+## CLI interface by calling Rosetta as a module
 ```
 %  python3 -m rosetta -h
 usage: __main__.py [-h] [--raw] [--calc_wilting_point] [--calc_field_capacity] [-i INPUT] [-o OUTPUT] model_n
