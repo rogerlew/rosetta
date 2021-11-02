@@ -108,7 +108,7 @@ class Rosetta(object):
         return field_capacity
 
     @staticmethod
-    def calculate_wilting_point(theta_r, theta_s, alpha, npar, ks):
+    def _calculate_wilting_point(theta_r, theta_s, alpha, npar, ks):
         """
         Twarakavi et al., (2009). An objective analysis of the dynamic nature of field capacity. Water Resources Research.
         """
@@ -141,7 +141,7 @@ class Rosetta(object):
                    ks=10**vgm_mean[4])
 
         if calc_wilting_point:
-             res['wp'] = self.calculate_wilting_point(
+             res['wp'] = self._calculate_wilting_point(
                  res['theta_r'], res['theta_s'], res['alpha'], res['npar'], res['ks'])
 
         if calc_field_capacity:
