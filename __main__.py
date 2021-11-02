@@ -5,7 +5,7 @@ import numpy as np
 import rosetta
 
 parser = argparse.ArgumentParser(
-    description='Rosetta 3 pedotransfer function interface example.')
+    description='Rosetta 3 pedotransfer function CLI.')
 parser.add_argument('model_n',  type=int)
 
 parser.add_argument('--raw', action='store_true', help='get raw data')
