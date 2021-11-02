@@ -10,7 +10,7 @@ parser.add_argument('model_n',  type=int)
 
 parser.add_argument('--raw', action='store_true', help='get raw data')
 parser.add_argument('--calc_wilting_point', action='store_true', help='calculate wilting point')
-parser.add_argument('--calc_field_capacity', action='store_true', help='calculate wilting point')
+parser.add_argument('--calc_field_capacity', action='store_true', help='calculate field capacity')
 
 parser.add_argument('-i', '--input', action='store', help='input from file ')
 parser.add_argument('-o', '--output', action='store',
