@@ -2,6 +2,7 @@
     Rosetta version 3-alpha (3a) 
     Pedotransfer functions by Schaap et al., 2001 and Zhang and Schaap, 2016.
     Copyright (C) 2016  Marcel G. Schaap
+    Copyright (C) 2021  Roger Lew <rogerlew@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,21 +39,20 @@ class DB(object):
 
     @property
     def conn(self):
-        return(self._conn)
+        return self._conn
 
-    def __init__(self, debug=False):
+    @property
+    def readonly(self):
+        return self._readonly
+
+    def __init__(self, debug=False, readonly=True):
         self.debug = debug
+        self._readonly = readonly
 
         if not exists(_sqlite_path):
             raise Exception("Cannot find the sqlite path '%s'" % _sqlite_path)
-            self.Error = sqlite3.Error
 
-        try:
-            self._conn = sqlite3.connect(sqlite_path)
-        except self.Error as e:
-            raise Exception("Database connection error %d: %s" %
-                            (e.args[0], e.args[1]))
-
+        self._conn = sqlite3.connect(_sqlite_path, uri=readonly)
         self.conn.text_factory = bytes
         self.sqlite = True
 
@@ -60,19 +60,19 @@ class DB(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        self.commit()
+        if not self.readonly:
+            self.commit()
         self.close()
         if self.debug:
             print("Closed DB object")
 
     def get_cursor(self):
-        try:
-            return self.conn.cursor()
-        except self.Error as e:
-            raise Exception("Database cursor error %d: %s" %
-                            (e.args[0], e.args[1]))
+        return self.conn.cursor()
 
     def commit(self):
+        if self.readonly:
+            raise Exception('DB was opened readonly ')
+
         if self.conn:
             self.conn.commit()
 

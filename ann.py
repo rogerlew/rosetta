@@ -1,7 +1,8 @@
-'''
+"""
     Rosetta version 3-alpha (3a) 
     Pedotransfer functions by Schaap et al., 2001 and Zhang and Schaap, 2016.
     Copyright (C) 2016  Marcel G. Schaap
+    Copyright (C) 2021  Roger Lew <rogerlew@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,8 +20,7 @@
 
     Marcel G. Schaap can be contacted at:
     mschaap@cals.arizona.edu
-
-'''
+"""
 
 import os
 import sys
@@ -94,7 +94,7 @@ class ANN(object):
 
     @property
     def transfer_funcs(self):
-        return(self._transfer_funcs)
+        return self._transfer_funcs
 
     @transfer_funcs.setter
     def transfer_funcs(self, val):
@@ -104,17 +104,17 @@ class ANN(object):
         hash_id = fbin.read(32)
         assert len(hash_id) == 32, 'len(hash_id <> 32'
         model = struct.unpack('i', fbin.read(4))[0]
-        return(hash_id, model)
+        return hash_id, model
 
     def read_mat(self, fbin, import_bin=False):
         """
-        so rows goes faster in ML, wheras COLS goes faster in PYTHON (and C)
+        so rows goes faster in ML, whereas COLS goes faster in PYTHON (and C)
         do we need to convert upon import to DB?
         """
         size = (struct.unpack('i', fbin.read(4))[
                 0], struct.unpack('i', fbin.read(4))[0])
-        assert size[0] < 100, 'error'
-        assert size[1] < 100, 'error'
+        assert size[0] < 100, size
+        assert size[1] < 100, size
         mat = np.zeros(size)
         if import_bin:
             # columns change fastest (Matlab, order=F)
@@ -127,13 +127,13 @@ class ANN(object):
                 for i in range(size[1]):
                     mat[j, i] = struct.unpack('d', fbin.read(8))[0]
 
-        return(mat)
+        return mat
 
     def parse_transfer_funcs(self, nl, tr):
         nl = int(nl)
         tr = [x.decode('utf-8') for x in tr]
         if tr is None:
-            return([self.tansig, self.logsig])  # Yonggen
+            return [self.tansig, self.logsig]  # Yonggen
 
         ntr = len(tr)
         assert ntr in [2, 3], 'number of transfer functions must be 2 or 3'
@@ -149,31 +149,28 @@ class ANN(object):
         funcs = []
         funcs_names = []
         for i in range(nl):
-            if trhelp[i].lower() == 'tansig':
+            _trhelp_lower = trhelp[i].lower()
+            if _trhelp_lower == 'tansig':
                 funcs.append(self.tansig)
                 funcs_names.append('tansig')
-            elif trhelp[i].lower() == 'logsig':
+            elif _trhelp_lower == 'logsig':
                 funcs.append(self.logsig)
                 funcs_names.append('logsig')
-            elif trhelp[i].lower() == ' purelin':
+            elif _trhelp_lower== ' purelin':
                 funcs.append(self.purelin)
                 funcs_names.append('purelin')
-            elif trhelp[i].lower() == 'none':
+            elif _trhelp_lower == 'none':
                 funcs.append(None)
                 funcs_names.append('none')
             else:
-                print('Unknown transfer function')
-                sys.exit(-1)
-        return(funcs, funcs_names)
+                raise Exception('Unknown transfer function')
+        return funcs, funcs_names
 
     def __init__(self, nlayer=2, transfers=None):
         self.w = []
         self.b = []
 
-        self.transfer_funcs, self.transfer_names = self.parse_transfer_funcs(
-            nlayer, transfers)
-
-        return
+        self.transfer_funcs, self.transfer_names = self.parse_transfer_funcs(nlayer, transfers)
 
     def read(self, fbin, import_bin=False, oldrosetta=False, hash_id=None, model=None):
         '''
@@ -194,9 +191,8 @@ class ANN(object):
         for i in range(count):
             self.cnf[i] = struct.unpack('i', fbin.read(4))[0]
         # Old rosetta gives nhidden, not nlayer!
-        #nlayer is a @property
         if oldrosetta:
-            self.nlayer = self.nlayer+1
+            self.nlayer += 1
 
         # print(self.cnf)
         for i in range(self.nlayer):
@@ -208,7 +204,7 @@ class ANN(object):
         # nlayer and transfers is NOT in the binary file, so need to pull from somewhere else!
         ann = ANN(nlayer=nlayer, transfers=transfers)
         ann.read(fbin, import_bin, oldrosetta, hash_id, model_id)
-        return(ann)
+        return ann
 
     def tostring(self):
         s = self.hash_id
@@ -220,7 +216,7 @@ class ANN(object):
             s += self.w[i].tostring(order='C')  # the array itself
             s += np.array(np.shape(self.b[i]), dtype=np.int32).tostring()
             s += self.b[i].tostring(order='C')
-        return(s)
+        return s
 
     def db_values(self, with_transfer=False):
         if with_transfer:
@@ -231,16 +227,19 @@ class ANN(object):
                                 'none', self.transfer_names[1]]
             else:
                 trhelp_names = self.transfer_names
-            return(self.hash_id, self.my_hash(), self.index, self.model, self.nin, self.nlayer, self.nhid1, trhelp_names[0], self.nhid2, trhelp_names[1], self.nout, trhelp_names[2], self.tostring())
+            return self.hash_id, self.my_hash(), self.index, self.model, self.nin, self.nlayer, \
+                   self.nhid1, trhelp_names[0], self.nhid2, trhelp_names[1], self.nout, trhelp_names[2], self.tostring()
         else:
-            return(self.hash_id, self.my_hash(), self.index, self.model, self.nin, self.nlayer, self.nhid1, self.nhid2, self.nout, self.tostring())
+            return self.hash_id, self.my_hash(), self.index, self.model, self.nin, \
+                   self.nlayer, self.nhid1, self.nhid2, self.nout, self.tostring()
 
     @staticmethod
     def db_string(with_transfer=False):
         if with_transfer:
-            return(' replica_hash, ann_hash, seq, model_id, nin, nlayer, nhid1, nhid1_transfer, nhid2, nhid2_transfer, nout, nout_transfer, ann_bin ')
+            return ' replica_hash, ann_hash, seq, model_id, nin, nlayer, '\
+                   'nhid1, nhid1_transfer, nhid2, nhid2_transfer, nout, nout_transfer, ann_bin '
         else:
-            return(' replica_hash, ann_hash, seq, model_id, nin, nlayer, nhid1, nhid2, nout, ann_bin ')
+            return ' replica_hash, ann_hash, seq, model_id, nin, nlayer, nhid1, nhid2, nout, ann_bin '
 
     def predict(self, x):
         tmp = np.copy(x)
@@ -263,10 +262,10 @@ class ANN(object):
             #print("tfunc ",tmp)
 
             # print(tmp[:,:5])
-        return(tmp)
+        return tmp
 
     def tansig(self, x):
-        returb - 1.0 + 2.0 / (1.0 + np.exp(-2.0 * x))
+        return - 1.0 + 2.0 / (1.0 + np.exp(-2.0 * x))
 
     def logsig(self, x):
         return 1.0 / (1.0 + np.exp(-1.0 * x))
@@ -286,34 +285,42 @@ class ANN(object):
         f = open(name, 'r')
         assert f, 'file not found'
         while f.tell() < os.fstat(f.fileno()).st_size:
-            yield ANnp.from_stream(f, import_bin=True)
+            yield ANN.from_stream(f, import_bin=True)
         f.close()
 
     # property?
     def my_hash(self):
-        return(hashlib.sha1(self.tostring()).hexdigest())  # returns 40, not 32
+        return hashlib.sha1(self.tostring()).hexdigest() # returns 40, not 32
 
 
 class REPLICA(object):
 
     @property
-    def hash_id(self): return(self._hash_id)
+    def hash_id(self): 
+        return self._hash_id
+
     @hash_id.setter
-    def hash_id(self, value): self._hash_id = value
+    def hash_id(self, value): 
+        self._hash_id = value
 
     @property
-    def pat(self): return(self._pat)
+    def pat(self): 
+        return self._pat
+
     @pat.setter
-    def pat(self, pat): self._pat = pat
+    def pat(self, pat): 
+        self._pat = pat
 
     @property
     def ncnv(self):
         nv = np.count_nonzero(np.array(self.pat == 0, dtype=np.int))
         nc = len(self.pat)
-        return(nc, nv)
+        return nc, nv
 
     @property
-    def name(self): return(self._name)
+    def name(self): 
+        return self._name
+
     @name.setter
     def name(self, name): self._name = name
 
@@ -336,13 +343,13 @@ class REPLICA(object):
             hash_id = tmp[0]
             assert len(hash_id) == 32, 'hash_id not of len 32'
             pat = np.array([int(i) for i in tmp[1:]], dtype=np.int8)
-        return(hash_id, pat)
+        return hash_id, pat
 
     @staticmethod
     def from_stream(s, oldrosetta=False):
         rep = REPLICA()
         rep.hash_id, rep.pat = rep.split_boot(s.strip(), oldrosetta)
-        return(rep)
+        return rep
 
     @staticmethod
     def from_query(hash_id, s):
@@ -350,57 +357,96 @@ class REPLICA(object):
         assert len(hash_id) == 32, 'hash_id not len(32)'
         rep.hash_id = hash_id
         rep.pat = np.fromstring(s, dtype=np.int8, count=len(s), sep='')
-        return(rep)
+        return rep
 
-    def tostring(self): return(self.pat.tostring())
+    def tostring(self):
+        return self.pat.tostring()
 
-    def db_values(self): return((self.hash_id, self.name, self.tostring()))
+    def db_values(self):
+        return self.hash_id, self.name, self.tostring()
 
     @staticmethod
-    def db_string(): return(' hash, name, replica ')
+    def db_string():
+        return ' hash, name, replica '
 
 
 class ANN_res(object):
 
     @property
-    def hash_id(self): return(self._hash_id)
+    def hash_id(self): 
+        return self._hash_id
+
     @hash_id.setter
-    def hash_id(self, value): self._hash_id = value
+    def hash_id(self, value): 
+        self._hash_id = value
 
     @property
-    def index(self): return(self._res[0])
+    def index(self): 
+        return self._res[0]
+
     @index.setter  # we might need this because we could renumber the index
-    def index(self, value): self._res[0] = value
+    def index(self, value): 
+        self._res[0] = value
+
     @property
-    def model_id(self): return(self._res[1])
+    def model_id(self): 
+        return self._res[1]
+
     @property
-    def nhid(self): return(self._res[2])
+    def nhid(self):
+        return self._res[2]
+
     @property
-    def nc(self): return(self._res[3])
+    def nc(self): 
+        return self._res[3]
+
     @property
-    def nv(self): return(self._res[4])
+    def nv(self): 
+        return self._res[4]
+
     @property
-    def vgc_rmse(self): return(self._res[5])
+    def vgc_rmse(self):
+        return self._res[5]
+
     @property
-    def vgc_me(self): return(self._res[6])
+    def vgc_me(self): 
+        return self._res[6]
+
     @property
-    def vgv_rmse(self): return(self._res[7])
+    def vgv_rmse(self): 
+        return self._res[7]
+
     @property
-    def vgv_me(self): return(self._res[8])
+    def vgv_me(self): 
+        return self._res[8]
+
     @property
-    def ksc_rmse(self): return(self._res[9])
+    def ksc_rmse(self): 
+        return self._res[9]
+
     @property
-    def ksc_me(self): return(self._res[10])
+    def ksc_me(self): 
+        return self._res[10]
+
     @property
-    def ksv_rmse(self): return(self._res[11])
+    def ksv_rmse(self): 
+        return self._res[11]
+
     @property
-    def ksv_me(self): return(self._res[12])
+    def ksv_me(self): 
+        return self._res[12]
+
     @property
-    def nfail(self): return(self._res[13])
+    def nfail(self): 
+        return self._res[13]
+
     @property
-    def res(self): return(self._res)
+    def res(self): 
+        return self._res
+
     @res.setter
-    def res(self, res): self._res = res
+    def res(self, res): 
+        self._res = res
 
     _sep = ""
 
@@ -415,7 +461,7 @@ class ANN_res(object):
                 ('vgc_me', self._sep), ('vgc_rmse', self._sep),
                 ('nv', self._sep), ('nc', self._sep),
                 ('nhid', self._sep), ('model', self._sep), ('i', self._sep))
-        return(reduce(lambda a, kv: a.replace(*kv), subs, line))
+        return reduce(lambda a, kv: a.replace(*kv), subs, line)
 
     def split_res(self, line):
 
@@ -424,30 +470,31 @@ class ANN_res(object):
                 res = float(val_string)
             except ValueError:
                 res = 999.999
-            return(res)
+            return res
 
         tmp = self.parse_res(line)
         tmp = tmp.split()
         hash_id = tmp[0]
         assert len(hash_id) == 32, 'hash_id not of len 32'
-        # conv=(int,int,int,int,int,float,float,float,float,int)  #Yonggen
         conv = (int, int, int, int, int, convert_float, convert_float, convert_float,
                 convert_float, convert_float, convert_float, convert_float, convert_float, int)
         res = [conv[i](a) for (i, a) in enumerate(tmp[1:])]
-        return(hash_id, res)
+        return hash_id, res
 
     def db_values(self):
-        return(self.hash_id, self.index, self.model_id, self.nhid, self.nc, self.nv, self.vgc_rmse, self.vgc_me, self.vgv_rmse, self.vgv_me, self.ksc_rmse, self.ksc_me, self.ksv_rmse, self.ksv_me, self.nfail)
+        return self.hash_id, self.index, self.model_id, self.nhid, self.nc, self.nv, self.vgc_rmse, self.vgc_me, \
+               self.vgv_rmse, self.vgv_me, self.ksc_rmse, self.ksc_me, self.ksv_rmse, self.ksv_me, self.nfail
 
     @staticmethod
     def db_string():
-        return(' replica_hash, seq, model_id, nhid, nc, nv, vgc_rmse, vgc_me, vgv_rmse, vgv_me, ksc_rmse, ksc_me, ksv_rmse, ksv_me, nfail ')
+        return ' replica_hash, seq, model_id, nhid, nc, nv, vgc_rmse, vgc_me, '\
+               'vgv_rmse, vgv_me, ksc_rmse, ksc_me, ksv_rmse, ksv_me, nfail '
 
     @staticmethod
     def from_stream(s):
         ann_res = ANN_res()
         ann_res.hash_id, ann_res.res = ann_res.split_res(s.strip())
-        return(ann_res)
+        return ann_res
 
     def __str__(self):
         return "%s(%r)" % (self.__class__, self.__dict__)
@@ -456,11 +503,11 @@ class ANN_res(object):
 class PS(object):
 
     @property
-    def var_names(self): return(self._var_names)
+    def var_names(self): 
+        return self._var_names
 
     def __init__(self):
-        self._var_names = []  # somewhow I cannot figure out how to this with property
-        return
+        self._var_names = []
 
     def compute_scales(self, data, var_names, var_pos, ymin=-1.0, ymax=1.0):
 
@@ -486,26 +533,24 @@ class PS(object):
 
         assert len(var_names) == self.nvar, 'len(var_names)!=self.nvar'
         assert len(var_names) == self.nvar, 'len(var_names)!=self.nvar'
-        self.var_names = var_names
+        self._var_names = var_names
         self.var_pos = var_pos
-
-        return
 
     @staticmethod
     def from_data(data, var_names, var_pos, ymin=-1.0, ymax=1.0):
         PSdata = PS()
         PSdata.compute_scales(data, var_names, var_pos, ymin=-1.0, ymax=1.0)
-        return(PSdata)
+        return PSdata
 
     @staticmethod
     def from_DB(cursor, model_id, model_var_table):
         assert cursor, 'bad cursor'
         PSdata = PS()
-        sql_query = 'SELECT var_name, V.var_id, xmin, xmax, ymin, ymax, gain, offset, sco, scs, sct, data_min, data_max FROM `minmax` as M JOIN `%s` as V ON (M.var_id=V.var_id) WHERE V.model_id= %s  ORDER by `var_pos` ;' % (
-            model_var_table, model_id)  # we convert to tuple so we get the proper formatting for MySQL
+        sql_query =  'SELECT var_name, V.var_id, xmin, xmax, ymin, ymax, gain, offset, sco, scs, sct, data_min, data_max '\
+                    f'FROM `minmax` as M JOIN `{model_var_table}` as V ON (M.var_id=V.var_id) WHERE V.model_id= {model_id}  ORDER by `var_pos` ;'
         cursor.execute(sql_query)
         PSdata.parse_query(cursor)  # has side effects
-        return(PSdata)
+        return PSdata
 
     def parse_query(self, cursor):
 
@@ -513,22 +558,22 @@ class PS(object):
         # print(data)
         self.nvar = len(data)
 
-        xmin = np.zeros((self.nvar,), dtype=np.float)
-        xmax = np.zeros((self.nvar,), dtype=np.float)
-        ymin = np.zeros((self.nvar,), dtype=np.float)
-        ymax = np.zeros((self.nvar,), dtype=np.float)
-        gain = np.zeros((self.nvar,), dtype=np.float)
-        offset = np.zeros((self.nvar,), dtype=np.float)
+        xmin = np.zeros((self.nvar,), dtype=float)
+        xmax = np.zeros((self.nvar,), dtype=float)
+        ymin = np.zeros((self.nvar,), dtype=float)
+        ymax = np.zeros((self.nvar,), dtype=float)
+        gain = np.zeros((self.nvar,), dtype=float)
+        offset = np.zeros((self.nvar,), dtype=float)
 
         # offset traditional unscaling of Rostta output
-        sco = np.zeros((self.nvar,), dtype=np.float)
+        sco = np.zeros((self.nvar,), dtype=float)
         # slope traditional unscaling of Rostta output
-        scs = np.zeros((self.nvar,), dtype=np.float)
+        scs = np.zeros((self.nvar,), dtype=float)
         # 0: no transform, 1: log10 transform
         sct = np.zeros((self.nvar,), dtype=np.int)
 
-        d_min = np.zeros((self.nvar,), dtype=np.float)
-        d_max = np.zeros((self.nvar,), dtype=np.float)
+        d_min = np.zeros((self.nvar,), dtype=float)
+        d_max = np.zeros((self.nvar,), dtype=float)
 
         # self._var_names=[] # moved to _init_
         for i, row in enumerate(data):
@@ -564,19 +609,15 @@ class PS(object):
         # pseudo 2D for data sanity checking (input needs to be in [min..max] (inclusive)
         self.data_min = d_min[:, np.newaxis]
         self.data_max = d_max[:, np.newaxis]
-        return
 
     def fwd_mapminmax(self, x):
-        tmp = (x-self.xmin)*self.gain+self.ymin
-        return(tmp)
+        return (x - self.xmin) * self.gain + self.ymin
 
     def bwd_mapminmax(self, y):
-        tmp = (y-self.ymin)/self.gain+self.offset
-        return(tmp)
+        return (y - self.ymin) / self.gain + self.offset
 
     def unscale(self, res):
-        unres = res*self.scs+self.sco
-        return(unres)
+        return res * self.scs + self.sco
 
     def check_data(self, data_in):
         # yield 2D array of bools
@@ -585,32 +626,32 @@ class PS(object):
         # print(self.data_min)
         # print("MAXIMUM")
         # print(self.data_max)
-        res = np.logical_and(np.greater_equal(data_in, self.data_min), np.less_equal(
-            data_in, self.data_max))  # must be between these values
+        res = np.logical_and(np.greater_equal(data_in, self.data_min),
+                             np.less_equal(data_in, self.data_max))  # must be between these values
         # convert 1D array (sample basis)
         res_sample = np.all(res, axis=0)
         # check that sand+silt+clay exist in var_names
-        ssc_set = set(['sand', 'silt', 'clay'])
+        ssc_set = {'sand', 'silt', 'clay'}
         vnset = set(self.var_names)
         # print(self.var_names)
         if ssc_set.issubset(vnset):
             # sand, silt,clay are input and must sum to [99..101]
-            ssc_sum = np.zeros((nsamp,), dtype=np.float)
+            ssc_sum = np.zeros((nsamp,), dtype=float)
             for s in ssc_set:
                 ssc_sum += data_in[self.var_names.index(s)]
             res_ssc = np.logical_and(np.greater_equal(ssc_sum, 99.0), np.less_equal(
                 ssc_sum, 101.0))  # must be between these values
             res_sample = np.logical_and(res_sample, res_ssc)
         # so return a 1D array whether the input is valid (true) or not
-        return(res_sample)
+        return res_sample
 
     def DB_store(self, cursor):
         assert cursor, 'bad cursor'
-        sql_insert = 'INSERT INTO `minmax` ( var_name, var_pos, xmin, xmax, ymin, ymax, gain, offset ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s )'
+        sql_insert = 'INSERT INTO `minmax` ( var_name, var_pos, xmin, xmax, ymin, ymax, gain, offset ) '\
+                     'VALUES (%s, %s, %s, %s, %s, %s, %s, %s )'
         vals = [(self.var_names[i], self.var_pos[i], self.xmin[i, 0], self.xmax[i, 0], self.ymin[i,
                  0], self.ymax[i, 0], self.gain[i, 0], self.offset[i, 0]) for i in range(self.nvar)]
         cursor.executemany(sql_insert, vals)
-        return
 
     def __str__(self):
         return "%s(%r)" % (self.__class__, self.__dict__)
@@ -618,30 +659,38 @@ class PS(object):
 
 class ANN_MODEL(object):
 
-    ann_query_clause = "SELECT A.replica_hash, A.seq, A.model_id, A.nin, A.nlayer, A.nhid1, A.nhid1_transfer, A.nhid2, A.nhid2_transfer, A.nout,A.nout_transfer, A.ann_bin FROM `Ann` as A JOIN Ann_res AS R ON (A.replica_hash=R.replica_hash) WHERE A.model_id= %s and R.model_id=A.model_id and R.nfail=0"
-
     @property
-    def ann_sequence(self): return(self._ann_sequence)
+    def ann_sequence(self): 
+        return self._ann_sequence
+
     @ann_sequence.setter
-    def ann_sequence(self, value): self._ann_sequence = value
+    def ann_sequence(self, value): 
+        self._ann_sequence = value
 
     @property
-    def nmodel(self): return(len(self.ann_sequence))
+    def nmodel(self): 
+        return len(self.ann_sequence)
 
     @property
     # hack! ann_sequence[0] should exist
-    def nout(self): return(self.ann_sequence[0].nout)
+    def nout(self): 
+        return self.ann_sequence[0].nout
 
     @property
-    def output_var(self): return(self.PS_data_out.var_names)
+    def output_var(self): 
+        return self.PS_data_out.var_names
 
     @property
-    def model_id(self): return(self._model_id)
+    def model_id(self): 
+        return self._model_id
+
     @model_id.setter
-    def model_id(self, value): self._model_id = value
+    def model_id(self, value): 
+        self._model_id = value
 
     @property
-    def input_var(self): return(self.PS_data_in.var_names)
+    def input_var(self): 
+        return self.PS_data_in.var_names
 
     def __init__(self, model_id, db):
 
@@ -649,22 +698,22 @@ class ANN_MODEL(object):
         with closing(db.get_cursor()) as cursor:
 
             #print(self.ann_query_clause % (model_id))
-            cursor.execute(self.ann_query_clause % (model_id))
+            cursor.execute(f"SELECT A.replica_hash, A.seq, A.model_id, A.nin, A.nlayer, A.nhid1, A.nhid1_transfer, "
+                           f"A.nhid2, A.nhid2_transfer, A.nout,A.nout_transfer, A.ann_bin "
+                           f"FROM `Ann` as A JOIN Ann_res AS R ON (A.replica_hash=R.replica_hash) "
+                           f"WHERE A.model_id= {model_id} and R.model_id=A.model_id and R.nfail=0")
             # this should be its own class, with PS for input and output, plus scaling
             tmp_list = list(cursor)
             # print(len(tmp_list))
             # print(tmp_list[0:4])
 
         # whoops, next line needs to be out of loop...
-        self.ann_sequence = [ANnp.from_stream(io.BytesIO(ann_bin), nlayer=nlayer, transfers=[nhid1_transfer, nhid2_transfer, nout_transfer]) for (
+        self.ann_sequence = [ANN.from_stream(io.BytesIO(ann_bin), nlayer=nlayer, transfers=[nhid1_transfer, nhid2_transfer, nout_transfer]) for (
             hash_id, seq, model_id, nin, nlayer, nhid1, nhid1_transfer, nhid2, nhid2_transfer, nout, nout_transfer, ann_bin) in tmp_list]
 
         assert len(self.ann_sequence) > 0, "Error cannot get the ANNs from the DB"
 
         self.model_id = model_id
-
-#        self.model_name=self.get_model_name(model_id,db)
-#        print(self.model_name)
 
         with closing(db.get_cursor()) as cursor:
             self.PS_data_out = PS.from_DB(cursor, model_id, 'Models_out_var')
@@ -672,15 +721,13 @@ class ANN_MODEL(object):
         with closing(db.get_cursor()) as cursor:
             self.PS_data_in = PS.from_DB(cursor, model_id, 'Models_in_var')
 
-        return
-
     def get_variables(self, model_id, db, table):
-        sql_string = 'SELECT `model_id`,`var_id`,`var_pos` FROM `%s`  WHERE `model_id`= %s  ORDER BY `var_pos`;' % (
-            table, model)
+        sql_string = f'SELECT `model_id`,`var_id`,`var_pos` FROM `{table}`  '\
+                     f'WHERE `model_id`= {self.model_id} ORDER BY `var_pos`;'
         with closing(db.get_cursor()) as cursor:
             cursor.execute(sql_string)
         variable_ids = [record[1] for record in list(cursor)]
-        return(variable_ids)
+        return variable_ids
 
     def predict(self, data):
 
@@ -694,7 +741,7 @@ class ANN_MODEL(object):
         # above could be decorator
 
         data_in_mm = self.PS_data_in.fwd_mapminmax(data_valid)
-        res_tmp = np.zeros((self.nmodel, self.nout, nsamp_valid), dtype=np.float)
+        res_tmp = np.zeros((self.nmodel, self.nout, nsamp_valid), dtype=float)
 
         for i, ann in enumerate(self.ann_sequence):
             try:
@@ -710,50 +757,59 @@ class ANN_MODEL(object):
             res_fin = res_tmp
         elif nsamp > nsamp_valid:
             res_fin = np.ones((self.nmodel, self.nout, nsamp),
-                             dtype=np.float)*-9.9
+                              dtype=float)*-9.9
             res_fin[:, :, data_ind[0]] = res_tmp
         else:
-            print("ERROR nsamp_valid > nsamp (should be impossible")
-            sys.exit(0)
+            raise Exception("ERROR nsamp_valid > nsamp (should be impossible")
 
-        return(res_fin, self.PS_data_out.var_names, data_bool)
+        return res_fin, self.PS_data_out.var_names, data_bool
 
 
-class PTF_MODEL(object):
+class PTF_Model(object):
 
     # model_no can be a compound model (more than one ann's, such as old rosetta)
     # model_id should be an individual model
 
     @property
-    def model_no(self): return(self._model_no)
+    def model_no(self): 
+        return self._model_no
+
     @model_no.setter
-    def model_no(self, val): self._model_no = val
+    def model_no(self, val): 
+        self._model_no = val
 
     @property
-    def model_name(self): return(self._model_name)
+    def model_name(self): 
+        return self._model_name
+
     @model_name.setter
-    def model_name(self, val): self._model_name = val
+    def model_name(self, val): 
+        self._model_name = val
 
     @property
-    def model_id(self): return(self._model_id)
+    def model_id(self): 
+        return self._model_id
+
     @model_id.setter
-    def model_id(self, val): self._model_id = val
+    def model_id(self, val): 
+        self._model_id = val
 
     @property
-    def model_seq(self): return(self._model_seq)
+    def model_seq(self): 
+        return self._model_seq
+
     @model_seq.setter
-    def model_seq(self, val): self._model_seq = val
+    def model_seq(self, val): 
+        self._model_seq = val
 
     @property
-    def input_var(self): return(
-        self.ann_models[0].PS_data_in.var_names)  # the [0] is a hack
+    def input_var(self): 
+        return self.ann_models[0].PS_data_in.var_names  # the [0] is a hack
 
     def __init__(self, model_no, db):
-
-        sql_string = 'SELECT `model_no`,`model_name`,`model_id`,`model_seq` FROM `Models_names` WHERE `model_no`= %s ORDER BY `model_seq` ;' % (
-            model_no)
+        sql_string = f'SELECT `model_no`,`model_name`,`model_id`,`model_seq` FROM `Models_names` '\
+                     f'WHERE `model_no`= {model_no} ORDER BY `model_seq` ;'
         self.model_no = model_no
-        # print(sql_string)
         with closing(db.get_cursor()) as cursor:
             cursor.execute(sql_string)
 
@@ -771,43 +827,42 @@ class PTF_MODEL(object):
                 self.model_seq.append(res[i][3])
                 self.ann_models.append(ANN_MODEL(self.model_id[i], db))
 
-        return
-
     def sum_stat(self, res, nvar, nsamp):
         def skewkurt(res, mean, std):
 
             adev = (res-mean)/std
             s = np.power(adev, 3).mean(axis=0)
             k = np.power(adev, 4).mean(axis=0)-3.0
-            return(s, k)
+            return s, k
 
         avg = np.mean(res, axis=0)
-        std = np.zeros((nvar, nsamp), dtype=np.float)
-        skew = np.zeros((nvar, nsamp), dtype=np.float)
-        kurt = np.zeros((nvar, nsamp), dtype=np.float)
+        std = np.zeros((nvar, nsamp), dtype=float)
+        skew = np.zeros((nvar, nsamp), dtype=float)
+        kurt = np.zeros((nvar, nsamp), dtype=float)
         # print(np.shape(res))
-        cov = np.zeros((nvar, nvar, nsamp), dtype=np.float)
+        cov = np.zeros((nvar, nvar, nsamp), dtype=float)
         for i in range(nsamp):
             # print(np.shape(res[:,:,i]))
-            cov[:, :, i] = np.cov(res[:, :, i], rowvar=0, ddof=0)
+            cov[:, :, i] = np.cov(res[:, :, i], rowvar=False, ddof=0)
             std[:, i] = np.sqrt(np.diag(cov[:, :, i]))
             s, k = skewkurt(res[:, :, i], avg[:, i], std[:, i])
 
             skew[:, i] = s
             kurt[:, i] = k
 
-        return(avg, std, cov, skew, kurt)
+        return avg, std, cov, skew, kurt
 
-    def predict(self, data_in, sum_data=True):
+    def predict(self, data_in, summary_data=True):
 
         # make sure data is a numpy thing
-        data = np.array(data_in, dtype=np.float)
+        data = np.array(data_in, dtype=float)
 
         # clumsy code....
         varout = []
         res = []
         data_bool = []
         nout_total = 0
+
         # need to be intelligent how data offered, transpose if needed? How to deal with square matrices?
         nin, nsamp = np.shape(data)
         # SELECT CODE HERE
@@ -824,21 +879,20 @@ class PTF_MODEL(object):
             # TODO: we can pull this out of underlying classes
             nout_total += len(v)
 
-        if sum_data:
+        if summary_data:
             # summarize in means and stdev, alpha-stable analysis indicates that
             # results are almost normal
             var_names = []
 
-            sum_res_mean = np.zeros((nout_total, nsamp), dtype=np.float)
-            sum_res_std = np.zeros((nout_total, nsamp), dtype=np.float)
-            sum_res_skew = np.zeros((nout_total, nsamp), dtype=np.float)
-            sum_res_kurt = np.zeros((nout_total, nsamp), dtype=np.float)
-            sum_res_cov = np.zeros(
-                (nout_total, nout_total, nsamp), dtype=np.float)
+            sum_res_mean = np.zeros((nout_total, nsamp), dtype=float)
+            sum_res_std = np.zeros((nout_total, nsamp), dtype=float)
+            sum_res_skew = np.zeros((nout_total, nsamp), dtype=float)
+            sum_res_kurt = np.zeros((nout_total, nsamp), dtype=float)
+            sum_res_cov = np.zeros((nout_total, nout_total, nsamp), dtype=float)
             sum_res_bool = np.zeros((nout_total, nsamp), dtype=bool)
             offset = 0
             for i in range(self.nmodel):  # nmodel refers to the possibility of HYBRID models
-                var_names += varout[i]  # could indicate log units
+                var_names.extend(varout[i])  # could indicate log units
                 nvar = len(varout[i])
                 mean, std, cov, skew, kurt = self.sum_stat(res[i], nvar, nsamp)
 
@@ -850,14 +904,18 @@ class PTF_MODEL(object):
                 sum_res_bool[offset:offset+nvar, :] = data_bool[i]
                 offset += nvar
             # remember that alpha, n,ks are log10
-            res_dict = dict(zip(['var_names', 'sum_res_mean', 'sum_res_std', 'sum_res_cov', 'sum_res_skew', 'sum_res_kurt', 'sum_res_bool'],
-                                [var_names,   sum_res_mean,   sum_res_std,   sum_res_cov,   sum_res_skew,   sum_res_kurt,   sum_res_bool]))
+            res_dict = dict(var_names=[x.decode('utf-8') for x in var_names],
+                            sum_res_mean=sum_res_mean,
+                            sum_res_std=sum_res_std,
+                            sum_res_cov=sum_res_cov,
+                            sum_res_skew=sum_res_skew,
+                            sum_res_kurt=sum_res_kurt,
+                            sum_res_bool=sum_res_bool)
         else:
-            res_dict = dict(
-                zip(['varout', 'res', 'data_bool'], [varout, res, data_bool]))
+            res_dict = dict(varout=varout, res=res, data_bool=data_bool)
+
         res_dict['nsamp'] = nsamp
         res_dict['nout'] = nout_total
         res_dict['nin'] = nin
 
-        return(res_dict)
-        # return(varout,res,data_bool)
+        return res_dict
