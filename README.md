@@ -76,7 +76,6 @@ The `Rosetta` class is intended to be backwards compatible with the original lib
 ```python
 > from rosetta import Rosetta3
 > ros = Rosetta3()
-> data = np.array([[35.0, 50.0, 15.0, 0.2]]) # sand, silt, clay, bulk density
 > ros.predict_kwargs(sand=35.0, silt=50.0, clay=15.0, bd=0.2)
 {'theta_r': 0.14238712, 
  'theta_s': 0.7368426, 
