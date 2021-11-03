@@ -1,1 +1,1 @@
-from .rosetta import Rosetta, Rosetta3, Rosetta2
+from .rosetta import Rosetta, Rosetta5, Rosetta4, Rosetta3, Rosetta2

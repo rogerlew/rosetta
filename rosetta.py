@@ -190,6 +190,31 @@ class Rosetta(object):
         return data
 
 
+class Rosetta5(Rosetta):
+    def __init__(self, debug=False):
+        Rosetta.__init__(self, model_no=5, debug=debug)
+
+    def predict_kwargs(self, sand, silt, clay, bd, th33, th1500, 
+                       calc_wilting_point=True, calc_field_capacity=True):
+        res_dict = self.predict(np.array([[sand, silt, clay, bd, th33, th1500]]), 
+                                calc_wilting_point=calc_wilting_point,
+                                calc_field_capacity=calc_field_capacity)
+
+        return {k: v[0] for k, v in res_dict.items()}
+
+
+class Rosetta4(Rosetta):
+    def __init__(self, debug=False):
+        Rosetta.__init__(self, model_no=4, debug=debug)
+
+    def predict_kwargs(self, sand, silt, clay, bd, th33, calc_wilting_point=True, calc_field_capacity=True):
+        res_dict = self.predict(np.array([[sand, silt, clay, bd, th33]]), 
+                                calc_wilting_point=calc_wilting_point,
+                                calc_field_capacity=calc_field_capacity)
+
+        return {k: v[0] for k, v in res_dict.items()}
+
+
 class Rosetta3(Rosetta):
     def __init__(self, debug=False):
         Rosetta.__init__(self, model_no=3, debug=debug)
