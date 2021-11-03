@@ -36,6 +36,23 @@ e.g. homebrew Python install on MacOS
  'ks': array([1047.97575913])}
 ```
 
+`data` should be a np.array with shape of nsamp, ninput. The ninput parameters should coorespond to the model.
+
+The `model_no` parameter specifies the Rosetta model.
+
+
+| model_no | Model Name | Input Parameters |
+|----------|------------|------------------|
+| 2 | NEW SSC | sand, silt, clay |
+| 3 | NEW SSC BD | sand, silt, clay, bulk density |
+| 4 | NEW SSC BD TH33 | sand, silt, clay, bulk density, theta at 33 kPa |
+| 5 | NEW SSC BD TH33 TH1500 | (sand, silt, clay, bulk density, theta at 33 kPa and 1500 kPa |
+| 102 | OLD SSC | sand, silt, clay |
+| 103 | OLD SSC BD | sand, silt, clay, bulk density |
+| 104 | OLD SSC BD TH33 | sand, silt, clay, bulk density, theta at 33 kPa |
+| 105 | OLD SSC BD TH33 TH1500 | sand, silt, clay, bulk density, theta at 33 kPa and 1500 kPa |
+
+
 ## Twarakavi et al., (2009) Wilting Point and Field Capacity Estimates
 ```python
 >>> ros.predict(data, calc_wilting_point=True, calc_field_capacity=True)
@@ -46,6 +63,24 @@ e.g. homebrew Python install on MacOS
  'ks': array([1047.97575913]), 
  'wp': array([0.2437112]), 
  'fc': array([0.34023513])}
+```
+
+## Rosetta3 and Rosetta2 classes
+
+The `Rosetta` class is intended to be backwards compatible with the original library. A more pythonic interface is provided by `Rosetta3()` (`Rosetta(model_no=3)` and `Rosetta2()` (`Rosetta(model_no=2)`. These provide a `.predict_kwargs()` method that accepts parameters as keyword arguments.
+
+```python
+> from rosetta import Rosetta3
+> ros = Rosetta3()
+> data = np.array([[35.0, 50.0, 15.0, 0.2]]) # sand, silt, clay, bulk density
+> ros.predict_kwargs(sand=35.0, silt=50.0, clay=15.0, bd=0.2)
+{'theta_r': 0.14238712, 
+ 'theta_s': 0.7368426, 
+ 'alpha': 0.00368141, 
+ 'npar': 1.44084392, 
+ 'ks': 1047.97575913,
+ 'wp': 0.2437112, 
+ 'fc': 0.34023513}
 ```
 
 ## CLI interface by calling Rosetta as a module
