@@ -52,6 +52,10 @@ The `model_no` parameter specifies the Rosetta model.
 | 104 | OLD SSC BD TH33 | sand, silt, clay, bulk density, theta at 33 kPa |
 | 105 | OLD SSC BD TH33 TH1500 | sand, silt, clay, bulk density, theta at 33 kPa and 1500 kPa |
 
+The expected units are:<br/>
+SSC in weight %<br/>
+BD in g/cm3<br/>
+TH33 and T1500 as cm3/cm3<br/>
 
 ## Twarakavi et al., (2009) Wilting Point and Field Capacity Estimates
 ```python
