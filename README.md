@@ -71,7 +71,7 @@ TH33 and T1500 as cm3/cm3<br/>
 
 ## Rosetta3 and Rosetta2 classes
 
-The `Rosetta` class is intended to be backwards compatible with the original library. A more pythonic interface is provided by `Rosetta3()` (`Rosetta(model_no=3)` and `Rosetta2()` (`Rosetta(model_no=2)`. These provide a `.predict_kwargs()` method that accepts parameters as keyword arguments.
+The `Rosetta` class is intended to be backwards compatible with the original library. A more pythonic interface is provided by `Rosetta3()` (`Rosetta(model_no=3)` (also `Rosetta2`, `Rosetta4` and `Rosetta5`). These provide a `.predict_kwargs()` method that accepts parameters as arguments and return scalars. By default these will also estimate wilting point and field capacity.
 
 ```python
 > from rosetta import Rosetta3
