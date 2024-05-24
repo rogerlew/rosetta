@@ -313,7 +313,7 @@ class REPLICA(object):
 
     @property
     def ncnv(self):
-        nv = np.count_nonzero(np.array(self.pat == 0, dtype=np.int))
+        nv = np.count_nonzero(np.array(self.pat == 0, dtype=np.int32))
         nc = len(self.pat)
         return nc, nv
 
@@ -570,7 +570,7 @@ class PS(object):
         # slope traditional unscaling of Rostta output
         scs = np.zeros((self.nvar,), dtype=float)
         # 0: no transform, 1: log10 transform
-        sct = np.zeros((self.nvar,), dtype=np.int)
+        sct = np.zeros((self.nvar,), dtype=np.int32)
 
         d_min = np.zeros((self.nvar,), dtype=float)
         d_max = np.zeros((self.nvar,), dtype=float)
