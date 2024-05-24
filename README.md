@@ -71,12 +71,11 @@ TH33 and T1500 as cm3/cm3<br/>
 
 ## Rosetta3 and Rosetta2 classes
 
-The `Rosetta` class is intended to be backwards compatible with the original library. A more pythonic interface is provided by `Rosetta3()` (`Rosetta(model_no=3)` and `Rosetta2()` (`Rosetta(model_no=2)`. These provide a `.predict_kwargs()` method that accepts parameters as keyword arguments.
+The `Rosetta` class is intended to be backwards compatible with the original library. A more pythonic interface is provided by `Rosetta3()` (`Rosetta(model_no=3)` (also `Rosetta2`, `Rosetta4` and `Rosetta5`). These provide a `.predict_kwargs()` method that accepts parameters as arguments and return scalars. By default these will also estimate wilting point and field capacity.
 
 ```python
 > from rosetta import Rosetta3
 > ros = Rosetta3()
-> data = np.array([[35.0, 50.0, 15.0, 0.2]]) # sand, silt, clay, bulk density
 > ros.predict_kwargs(sand=35.0, silt=50.0, clay=15.0, bd=0.2)
 {'theta_r': 0.14238712, 
  'theta_s': 0.7368426, 
