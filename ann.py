@@ -546,8 +546,10 @@ class PS(object):
     def from_DB(cursor, model_id, model_var_table):
         assert cursor, 'bad cursor'
         PSdata = PS()
-        sql_query =  'SELECT var_name, V.var_id, xmin, xmax, ymin, ymax, gain, offset, sco, scs, sct, data_min, data_max '\
-                    f'FROM `minmax` as M JOIN `{model_var_table}` as V ON (M.var_id=V.var_id) WHERE V.model_id= {model_id}  ORDER by `var_pos` ;'
+        sql_query =  'SELECT M.var_name, V.var_id, M.xmin, M.xmax, M.ymin, M.ymax, M.gain, M.offset, '\
+                    'M.sco, M.scs, M.sct, M.data_min, M.data_max '\
+                    f'FROM "minmax" AS M JOIN "{model_var_table}" AS V ON (M.var_id = V.var_id) '\
+                    f'WHERE V.model_id = {model_id} ORDER BY V.var_pos;'
         cursor.execute(sql_query)
         PSdata.parse_query(cursor)  # has side effects
         return PSdata
@@ -647,7 +649,7 @@ class PS(object):
 
     def DB_store(self, cursor):
         assert cursor, 'bad cursor'
-        sql_insert = 'INSERT INTO `minmax` ( var_name, var_pos, xmin, xmax, ymin, ymax, gain, offset ) '\
+        sql_insert = 'INSERT INTO "minmax" ( var_name, var_pos, xmin, xmax, ymin, ymax, gain, offset ) '\
                      'VALUES (%s, %s, %s, %s, %s, %s, %s, %s )'
         vals = [(self.var_names[i], self.var_pos[i], self.xmin[i, 0], self.xmax[i, 0], self.ymin[i,
                  0], self.ymax[i, 0], self.gain[i, 0], self.offset[i, 0]) for i in range(self.nvar)]
@@ -699,9 +701,9 @@ class ANN_MODEL(object):
 
             #print(self.ann_query_clause % (model_id))
             cursor.execute(f"SELECT A.replica_hash, A.seq, A.model_id, A.nin, A.nlayer, A.nhid1, A.nhid1_transfer, "
-                           f"A.nhid2, A.nhid2_transfer, A.nout,A.nout_transfer, A.ann_bin "
-                           f"FROM `Ann` as A JOIN Ann_res AS R ON (A.replica_hash=R.replica_hash) "
-                           f"WHERE A.model_id= {model_id} and R.model_id=A.model_id and R.nfail=0")
+                           f"A.nhid2, A.nhid2_transfer, A.nout, A.nout_transfer, A.ann_bin "
+                           f"FROM \"Ann\" AS A JOIN Ann_res AS R ON (A.replica_hash = R.replica_hash) "
+                           f"WHERE A.model_id = {model_id} AND R.model_id = A.model_id AND R.nfail = 0")
             # this should be its own class, with PS for input and output, plus scaling
             tmp_list = list(cursor)
             # print(len(tmp_list))
@@ -722,8 +724,8 @@ class ANN_MODEL(object):
             self.PS_data_in = PS.from_DB(cursor, model_id, 'Models_in_var')
 
     def get_variables(self, model_id, db, table):
-        sql_string = f'SELECT `model_id`,`var_id`,`var_pos` FROM `{table}`  '\
-                     f'WHERE `model_id`= {self.model_id} ORDER BY `var_pos`;'
+        sql_string = f'SELECT "model_id","var_id","var_pos" FROM "{table}" '\
+                     f'WHERE "model_id" = {self.model_id} ORDER BY "var_pos";'
         with closing(db.get_cursor()) as cursor:
             cursor.execute(sql_string)
         variable_ids = [record[1] for record in list(cursor)]
@@ -807,8 +809,8 @@ class PTF_Model(object):
         return self.ann_models[0].PS_data_in.var_names  # the [0] is a hack
 
     def __init__(self, model_no, db):
-        sql_string = f'SELECT `model_no`,`model_name`,`model_id`,`model_seq` FROM `Models_names` '\
-                     f'WHERE `model_no`= {model_no} ORDER BY `model_seq` ;'
+        sql_string = f'SELECT "model_no","model_name","model_id","model_seq" FROM "Models_names" '\
+                     f'WHERE "model_no" = {model_no} ORDER BY "model_seq";'
         self.model_no = model_no
         with closing(db.get_cursor()) as cursor:
             cursor.execute(sql_string)

@@ -24,8 +24,12 @@
 
 import sys
 import os
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath('../../'))
+_TESTS_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _TESTS_DIR.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 from pprint import pprint
 
@@ -113,4 +117,3 @@ class TestPTF_Model(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

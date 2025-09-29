@@ -1,0 +1,13 @@
+Replicas.parquet filter=lfs diff=lfs merge=lfs -text
+Ann.parquet filter=lfs diff=lfs merge=lfs -text
+Ann_res.parquet filter=lfs diff=lfs merge=lfs -text
+Data.parquet filter=lfs diff=lfs merge=lfs -text
+minmax_bku.parquet filter=lfs diff=lfs merge=lfs -text
+minmax_purelin.parquet filter=lfs diff=lfs merge=lfs -text
+Models_in_var.parquet filter=lfs diff=lfs merge=lfs -text
+nfail.parquet filter=lfs diff=lfs merge=lfs -text
+theta_h.parquet filter=lfs diff=lfs merge=lfs -text
+minmax.parquet filter=lfs diff=lfs merge=lfs -text
+Models_names.parquet filter=lfs diff=lfs merge=lfs -text
+Models_out_var.parquet filter=lfs diff=lfs merge=lfs -text
+rosetta.duckdb filter=lfs diff=lfs merge=lfs -text

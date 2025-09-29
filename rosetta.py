@@ -171,7 +171,7 @@ class Rosetta(object):
         """
         debug = self.debug
         ptf_model = self.ptf_model
-        sql_string = "SELECT " + ",".join(input_var) + " FROM `Data`"
+        sql_string = "SELECT " + ",".join(input_var) + " FROM \"Data\""
 
         if debug:
             print("Getting data from database")

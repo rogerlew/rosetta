@@ -24,15 +24,60 @@
 '''
 
 
-import os
-import sys
-import sqlite3
+from pathlib import Path
 
-from os.path import join as _join
-from os.path import exists
+import duckdb
 
-_this_dir = os.path.dirname(__file__)
-_sqlite_path = _join(_this_dir, "sqlite/Rosetta.sqlite")
+_this_dir = Path(__file__).resolve().parent
+_duckdb_path = _this_dir / "db" / "rosetta.duckdb"
+
+
+def _convert_row(values):
+    converted = []
+    for value in values:
+        if isinstance(value, str):
+            converted.append(value.encode("utf-8"))
+        elif isinstance(value, memoryview):
+            converted.append(bytes(value))
+        else:
+            converted.append(value)
+    return tuple(converted)
+
+
+class DuckCursor:
+
+    def __init__(self, conn: duckdb.DuckDBPyConnection):
+        self._conn = conn
+        self._relation = None
+        self._rows = None
+
+    def execute(self, sql, params=None):
+        if params is None:
+            self._relation = self._conn.execute(sql)
+        else:
+            self._relation = self._conn.execute(sql, params)
+        self._rows = None
+        return self
+
+    def _ensure_rows(self):
+        if self._rows is None and self._relation is not None:
+            fetched = self._relation.fetchall()
+            self._rows = [_convert_row(row) for row in fetched]
+        return self._rows or []
+
+    def fetchall(self):
+        return list(self._ensure_rows())
+
+    def fetchone(self):
+        rows = self._ensure_rows()
+        return rows[0] if rows else None
+
+    def __iter__(self):
+        return iter(self._ensure_rows())
+
+    def close(self):
+        self._relation = None
+        self._rows = None
 
 
 class DB(object):
@@ -45,16 +90,16 @@ class DB(object):
     def readonly(self):
         return self._readonly
 
-    def __init__(self, debug=False, readonly=True):
+    def __init__(self, debug=False, readonly=True, database_path: Path | None = None):
         self.debug = debug
         self._readonly = readonly
 
-        if not exists(_sqlite_path):
-            raise Exception("Cannot find the sqlite path '%s'" % _sqlite_path)
+        db_path = Path(database_path) if database_path else _duckdb_path
+        if not db_path.exists():
+            raise Exception(f"Cannot find the DuckDB database '{db_path}'")
 
-        self._conn = sqlite3.connect(_sqlite_path, uri=readonly)
-        self.conn.text_factory = bytes
-        self.sqlite = True
+        self._conn = duckdb.connect(str(db_path), read_only=readonly)
+        self.duckdb = True
 
     def __enter__(self):
         return self
@@ -67,7 +112,7 @@ class DB(object):
             print("Closed DB object")
 
     def get_cursor(self):
-        return self.conn.cursor()
+        return DuckCursor(self.conn)
 
     def commit(self):
         if self.readonly:
