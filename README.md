@@ -8,7 +8,32 @@ distributions and summary statistics (Rosetta3). Journal of Hydrology.
 
 This version of Rosetta has been refactored by Roger Lew (2021) for use as a Python3 package under GNU GPL V2.
 
+This version of Rosetta has been refactored by Roger Lew and OpenAI Codex (gpt-5-codex high) to use duckdb as replacement for sqlite
+
 For more information regrading Rosetta see https://cals.arizona.edu/research/rosetta/
+
+
+## Storage Backend
+
+Rosetta now ships with a DuckDB-backed metadata store (`db/rosetta.duckdb`) replacing the legacy SQLite database. The
+switch eliminates the write-lock contention that arose whenever multiple jobs hit the SQLite file on shared HPC
+filesystems. SQLite hands each connection a shared lock for reads but escalates to `RESERVED` as soon as one writer
+appears; on NFS, Lustre, or GPFS a single long transaction can stall every reader with `database is locked` errors. DuckDB
+keeps those reads lock-free, and Rosetta opens the database in read-only mode by default. 
+
+`sqlite` contains the original database
+
+`db` is the new database extracted from sqlite
+
+You can rebuild the bundled dataset with the helper scripts under `_migration/`:
+
+```bash
+# Export each SQLite table to Parquet (one-off migration step)
+python _migration/dump_sqlite_to_parquet.py
+
+# Create or refresh the DuckDB file from those Parquet tables
+python _migration/create_duckdb.py --replace
+```
 
 ## Installation
 
@@ -109,3 +134,12 @@ optional arguments:
 
 % python3 -m rosetta 3 -i test_input_H3w.txt -o test_output_H3w.txt
 ```
+
+## Tests
+
+Two focused regression suites ship with the package:
+
+- `tests/test_rosetta_regression.py` locks Rosetta2 and Rosetta3 predictions to known baselines so storage changes keep
+  numerical behaviour intact.
+- `tests/test_performance.py` offers an opt-in microbenchmark (`ROSETTA_RUN_BENCHMARKS=1`) that records init/prediction
+  timings, making it easy to track performance across backend updates.
