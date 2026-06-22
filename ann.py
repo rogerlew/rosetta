@@ -634,13 +634,17 @@ class PS(object):
         res_sample = np.all(res, axis=0)
         # check that sand+silt+clay exist in var_names
         ssc_set = {'sand', 'silt', 'clay'}
-        vnset = set(self.var_names)
+        var_names = [
+            name.decode('utf-8') if isinstance(name, bytes) else name
+            for name in self.var_names
+        ]
+        vnset = set(var_names)
         # print(self.var_names)
         if ssc_set.issubset(vnset):
             # sand, silt,clay are input and must sum to [99..101]
             ssc_sum = np.zeros((nsamp,), dtype=float)
             for s in ssc_set:
-                ssc_sum += data_in[self.var_names.index(s)]
+                ssc_sum += data_in[var_names.index(s)]
             res_ssc = np.logical_and(np.greater_equal(ssc_sum, 99.0), np.less_equal(
                 ssc_sum, 101.0))  # must be between these values
             res_sample = np.logical_and(res_sample, res_ssc)

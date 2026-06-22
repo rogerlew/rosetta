@@ -100,6 +100,36 @@ class RosettaRegressionTests(unittest.TestCase):
         )
         self.assert_matches_expected(observed, EXPECTED_ROSETTA2, "rosetta2")
 
+    def test_texture_sum_validation_accepts_valid_samples(self):
+        model = Rosetta2()
+
+        observed = model.predict_raw(
+            np.array([[self.sand, self.silt, self.clay]], dtype=float),
+            summary_data=True,
+        )
+
+        self.assertTrue(observed["sum_res_bool"].all())
+
+    def test_texture_sum_validation_rejects_low_sum_samples(self):
+        model = Rosetta2()
+
+        observed = model.predict_raw(
+            np.array([[40.0, 30.0, 10.0]], dtype=float),
+            summary_data=True,
+        )
+
+        self.assertFalse(observed["sum_res_bool"].any())
+
+    def test_texture_sum_validation_rejects_high_sum_samples(self):
+        model = Rosetta3()
+
+        observed = model.predict_raw(
+            np.array([[80.0, 20.0, 5.0, self.bd]], dtype=float),
+            summary_data=True,
+        )
+
+        self.assertFalse(observed["sum_res_bool"].any())
+
 
 if __name__ == "__main__":
     unittest.main()
